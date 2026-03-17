@@ -1,0 +1,25 @@
+https://img.kiosko.net/[DATE]/uk/guardian.750.jpg
+https://img.kiosko.net/[DATE]/uk/the_independent.750.jpg
+https://img.kiosko.net/[DATE]/uk/ft_uk.750.jpg
+https://img.kiosko.net/[DATE]/uk/the_times.750.jpg
+https://img.kiosko.net/[DATE]/uk/daily_telegraph.750.jpg
+https://img.kiosko.net/[DATE]/uk/daily_mail.750.jpg
+https://img.kiosko.net/[DATE]/uk/daily_express.750.jpg
+https://img.kiosko.net/[DATE]/uk/daily_star.750.jpg
+https://newsworks.org.uk/wp-content/uploads/[YEAR]/[MONTH]/SUN_[DATE_NO_SEPARATORS]_null_null_01_1.jpg
+https://newsworks.org.uk/wp-content/uploads/[YEAR]/[MONTH]/DMR_[DATE_NO_SEPARATORS]_null_null_01_1.jpg
+
+
+# Only seams to keep 2 days back
+#https://newsworks.org.uk/wp-content/uploads/[YEAR]/[MONTH]/SUN_[DATE_NO_SEPARATORS]_null_null_01_1.jpg
+
+# The default sizes are all over the place...
+#https://img.kiosko.net/[DATE]/uk/guardian.jpg
+#https://img.kiosko.net/[DATE]/uk/the_independent.jpg
+#https://img.kiosko.net/[DATE]/uk/ft_uk.750.jpg
+#https://img.kiosko.net/[DATE]/uk/the_times.jpg
+#https://img.kiosko.net/[DATE]/uk/daily_telegraph.jpg
+#https://img.kiosko.net/[DATE]/uk/daily_mail.jpg
+#https://img.kiosko.net/[DATE]/uk/daily_express.jpg
+#https://img.kiosko.net/[DATE]/uk/daily_star.jpg
+

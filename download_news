@@ -1,0 +1,184 @@
+#!/bin/bash
+
+# --------------------------------------------------------
+# Configuration
+# --------------------------------------------------------
+current_user="mrmoo" #NOTE: Cannot us $USER as usually scheduled
+
+output_file="montage.jpg"
+output_image_width="5120"
+
+file_to_read="./url_list.txt"
+line_must_start_with="http"
+
+url_marker_date_url_separated="\[DATE\]"
+url_marker_year="\[YEAR\]"
+url_marker_month="\[MONTH\]"
+url_marker_day="\[DAY\]"
+url_marker_date_no_separaters="\[DATE_NO_SEPARATORS\]"
+
+image_folder="images/"
+backup_image_folder="images/backup/"
+# --------------------------------------------------------
+
+
+# --------------------------------------------------------
+# Show help or version details
+# --------------------------------------------------------
+version="Get the papers front pages (download_news) 1.1
+
+Written by MrMoo."
+
+usage="Usage: $0 [OPTION]...
+Will loop through the URLs listed in the (file_to_read) and retrieve the images of today's news paper front 
+pages and then smoosh them into one image (jpg) for my desktop image. 
+
+Every time it runs it backs up the current ones before getting the new ones, so watch it getting to big!
+
+It relies on having imagemagick installed and is very much geared up for the website img.kiosko.net.
+
+The URL list (file_to_read) can cope with simple replacement values...
+
+    [DATE]                  :   2025/06/24
+    [YEAR]                  :   2025
+    [MONTH]                 :   06
+    [DAY]                   :   24
+    [DATE_NO_SEPARATORS]    :   20250624
+
+Each entry must start with 'http'.
+
+Options are...
+    
+    Very limited and are mainly just hard coded at the top of the script.
+
+    -d  Override today's a date to use...
+        $0 -d 2025-06-24
+
+TODO...
+    7 Build a better one in a better language with more configuration.
+    9 Error checking for manually entered dates and no file.
+
+Report bugs to <script@rubbermonkeys.co.uk>."
+
+not_known="Unrecognised parameter"
+
+case $1 in
+--help)      printf '%s\n' "$usage"   || exit 1; exit;;
+-h)          printf '%s\n' "$usage"   || exit 1; exit;;
+--version)   printf '%s\n' "$version" || exit 1; exit;;
+-v)          printf '%s\n' "$version" || exit 1; exit;;
+esac
+# --------------------------------------------------------
+
+
+# --------------------------------------------------------
+# Loop through all the parameters and deal with them
+# --------------------------------------------------------
+read_date=0
+the_date=$(date +'%Y-%m-%d')
+params=("$@")
+for param in "${params[@]}"; do
+    # Get number to show from parameters
+    if [ $read_date = 1 ]; then
+        the_date=$param
+        read_date=0
+    
+    # Next one will be a date
+    elif [ $param = "-d" ]; then
+        read_date=1
+    
+    # Not a recognised parameter so show help
+    else
+        echo "$not_known"; echo "$usage"; exit;
+    fi
+done
+# --------------------------------------------------------
+
+# Convert the date into usable strings
+current_date_url_separated=$(date -d "$the_date" +'%Y/%m/%d')
+current_date_no_separaters=$(date -d "$the_date" +'%Y%m%d')
+current_date_year=$(date -d "$the_date" +'%Y')
+current_date_month=$(date -d "$the_date" +'%m')
+current_date_day=$(date -d "$the_date" +'%d')
+filename_prefix=$(date -d "$the_date" +'%Y-%m-%d_')
+
+# Make the directory if they does not exist
+if [ ! -d "$image_folder" ]; then mkdir $image_folder; fi
+if [ ! -d "$backup_image_folder" ]; then mkdir $backup_image_folder; fi
+
+# Move the old images into the backup folder
+for file in $image_folder*
+do
+    if [ ! -d "$file" ]; then # Not a directory
+        if [[ ! "$file" == "$image_folder$filename_prefix"* ]]; then # Does not start with date
+            echo "Moving : $file - $backup_image_folder"
+            mv "$file" "$backup_image_folder"
+        fi
+    fi
+done
+
+# Read the input file line by line
+iterator=0
+
+while IFS= read -r LINE
+do
+    # Assign each line to a variable
+    image_link="$LINE"
+
+    # Very basic sanity check for URL
+    if [[ "$image_link" == "$line_must_start_with"* ]]
+    then
+
+        # Iterator for ordering images
+        iterator=$((iterator + 1))
+
+        # Replace the markers
+        #use ‘#’ as the delimiter of the s command instead of /
+        image_link=$(echo $image_link | sed 's#'$url_marker_date_url_separated'#'$current_date_url_separated'#')
+        image_link=$(echo $image_link | sed 's#'$url_marker_date_no_separaters'#'$current_date_no_separaters'#')
+        image_link=$(echo $image_link | sed 's#'$url_marker_year'#'$current_date_year'#')
+        image_link=$(echo $image_link | sed 's#'$url_marker_month'#'$current_date_month'#')
+        image_link=$(echo $image_link | sed 's#'$url_marker_day'#'$current_date_day'#')
+        
+
+        # Get the filename for saving and basic cleanup
+        file_name="$(echo $image_link | rev)"
+        file_name="$(cut -d '/' -f 1 <<< $file_name | rev)"
+        file_name="${file_name//[^A-Za-z._]/}"
+        file_name="${file_name//__/_}"
+        file_name="${file_name//../.}"
+        
+        # Just make a path (for readability)
+        save_path=$image_folder$filename_prefix$iterator'_'$file_name
+        
+        # Does the file not exist if so download it
+        if [ ! -f $save_path ]; then
+            echo "Downloading : $iterator : $image_link"
+            curl $image_link -o $save_path > /dev/null 2>&1
+
+            # Use imagemagick to check the image and remove if duff
+            image_is_valid=$(identify $save_path &> /dev/null; echo $?)
+            if [[ "$image_is_valid" == "1" ]]; then rm $save_path; fi
+
+        else
+            echo "Skipping : $iterator : $image_link"
+        fi
+
+    fi
+done < "$file_to_read"
+
+# Use imagemagick to create one big image, set size then brightness
+# --------------------------------------------------------------------
+# NOTE: Changed to use Linux file sort as it orders them correctly and does not put 1 and 10 together
+#       e.g. $(ls -1 $image_folder*.jpg | sort -V) instead of "$image_folder*.jpg"
+convert -resize 750 -background '#000000' +append $(ls -1 $image_folder*.jpg | sort -V) $output_file > /dev/null 2>&1
+mogrify -resize $output_image_width $output_file
+convert $output_file -brightness-contrast -20 $output_file
+
+# Lets change ownership just for an easier life
+chown $current_user $image_folder*.jpg
+chown $current_user $output_file
+# --------------------------------------------------------------------
+
+exit 0
+
