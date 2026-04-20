@@ -15,10 +15,23 @@ url_marker_date_url_separated="\[DATE\]"
 url_marker_year="\[YEAR\]"
 url_marker_month="\[MONTH\]"
 url_marker_day="\[DAY\]"
-url_marker_date_no_separaters="\[DATE_NO_SEPARATORS\]"
+url_marker_date_no_separators="\[DATE_NO_SEPARATORS\]"
 
 image_folder="images/"
 backup_image_folder="images/backup/"
+# --------------------------------------------------------
+
+
+# --------------------------------------------------------
+# Convert the date into usable strings
+# --------------------------------------------------------
+the_date=$(date +'%Y-%m-%d')
+current_date_url_separated=$(date -d "$the_date" +'%Y/%m/%d')
+current_date_no_separators=$(date -d "$the_date" +'%Y%m%d')
+current_date_year=$(date -d "$the_date" +'%Y')
+current_date_month=$(date -d "$the_date" +'%m')
+current_date_day=$(date -d "$the_date" +'%d')
+filename_prefix=$(date -d "$the_date" +'%Y-%m-%d_')
 # --------------------------------------------------------
 
 
@@ -29,9 +42,10 @@ version="Get the papers front pages (download_news) 1.1
 
 Written by MrMoo."
 
-usage="Usage: $0 [OPTION]...
-Will loop through the URLs listed in the (file_to_read) and retrieve the images of today's news paper front 
-pages and then smoosh them into one image (jpg) for my desktop image. 
+usage="
+Usage: $0 [OPTION]
+
+Will loop through the URLs listed in the (file_to_read) and retrieve the images of today's news paper front pages and then smoosh them into one image (jpg) for my desktop image.
 
 Every time it runs it backs up the current ones before getting the new ones, so watch it getting to big!
 
@@ -39,11 +53,11 @@ It relies on having imagemagick installed and is very much geared up for the web
 
 The URL list (file_to_read) can cope with simple replacement values...
 
-    [DATE]                  :   2025/06/24
-    [YEAR]                  :   2025
-    [MONTH]                 :   06
-    [DAY]                   :   24
-    [DATE_NO_SEPARATORS]    :   20250624
+    [DATE]                  :   $current_date_url_separated
+    [YEAR]                  :   $current_date_year
+    [MONTH]                 :   $current_date_month
+    [DAY]                   :   $current_date_day
+    [DATE_NO_SEPARATORS]    :   $current_date_no_separators
 
 Each entry must start with 'http'.
 
@@ -52,7 +66,7 @@ Options are...
     Very limited and are mainly just hard coded at the top of the script.
 
     -d  Override today's a date to use...
-        $0 -d 2025-06-24
+        $0 -d $the_date
 
 TODO...
     7 Build a better one in a better language with more configuration.
@@ -75,7 +89,6 @@ esac
 # Loop through all the parameters and deal with them
 # --------------------------------------------------------
 read_date=0
-the_date=$(date +'%Y-%m-%d')
 params=("$@")
 for param in "${params[@]}"; do
     # Get number to show from parameters
@@ -94,13 +107,6 @@ for param in "${params[@]}"; do
 done
 # --------------------------------------------------------
 
-# Convert the date into usable strings
-current_date_url_separated=$(date -d "$the_date" +'%Y/%m/%d')
-current_date_no_separaters=$(date -d "$the_date" +'%Y%m%d')
-current_date_year=$(date -d "$the_date" +'%Y')
-current_date_month=$(date -d "$the_date" +'%m')
-current_date_day=$(date -d "$the_date" +'%d')
-filename_prefix=$(date -d "$the_date" +'%Y-%m-%d_')
 
 # Make the directory if they does not exist
 if [ ! -d "$image_folder" ]; then mkdir $image_folder; fi
@@ -135,7 +141,7 @@ do
         # Replace the markers
         #use ‘#’ as the delimiter of the s command instead of /
         image_link=$(echo $image_link | sed 's#'$url_marker_date_url_separated'#'$current_date_url_separated'#')
-        image_link=$(echo $image_link | sed 's#'$url_marker_date_no_separaters'#'$current_date_no_separaters'#')
+        image_link=$(echo $image_link | sed 's#'$url_marker_date_no_separators'#'$current_date_no_separators'#')
         image_link=$(echo $image_link | sed 's#'$url_marker_year'#'$current_date_year'#')
         image_link=$(echo $image_link | sed 's#'$url_marker_month'#'$current_date_month'#')
         image_link=$(echo $image_link | sed 's#'$url_marker_day'#'$current_date_day'#')
